@@ -1,0 +1,133 @@
+<html lang="en">
+<head>
+  <script src="https://unpkg.com/react@16/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.js"></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.js'></script>
+  <script src="https://unpkg.com/react-router-dom/umd/react-router-dom.min.js"></script>
+</head>
+<body>
+  <div id='root'></div>
+</body>
+  <script type='text/babel'>
+    const root = document.querySelector('#root')
+    const {Component} = React
+    const { HashRouter, Route, Link} = ReactRouterDOM
+
+    let companies = axios.get('https://acme-users-api-rev.herokuapp.com/api/companies')
+    let products = axios.get('https://acme-users-api-rev.herokuapp.com/api/products')
+    let offerings = axios.get('https://acme-users-api-rev.herokuapp.com/api/offerings')
+
+    // const ProcessOfferings = ({compData, prodData, offerData}) => {
+    //   let offerings = offerData
+    //   let products = prodData
+    //   let companies = compData
+
+    //   offerings.forEach((elem) => {
+    //     let foundProduct = products.find(x => x.id === elem.productId)
+    //     let foundCompany = companies.find(x => x.id === elem.companyId)
+
+    //     if (elem.productId === foundProduct.id) {
+    //       elem.productInfo = foundProduct
+    //     }
+
+    //     if (elem.companyId === foundCompany.id) {
+    //       elem.companyInfo = foundCompany
+    //     }
+    //   })
+
+    //   return offerings
+    // }
+
+    const CreateObj = ({compData, prodData, offerData}) => {
+
+      // let runFunc = ProcessOfferings(compData, prodData, offerData)
+      let newCompObj = {}
+      offerData.map(offer => {
+        if (compData === offer.companyId) {
+          newCompObj[offer.productId] = offer.price
+        }
+      })
+    //  return runFunc.filter( obj => {
+    //     if (obj.companyId === company.id) {
+    //       return(
+    //         <li> {obj.price} </li>
+    //       )
+    //     }
+    //   })
+      console.log(newCompObj)
+      return (
+        <li>{newCompObj['799d4209-cfd5-45c3-92a7-6b5318366e80']}</li>
+      )
+    }
+
+    const GenerateComp = ({compData, prodData, offerData})=> {
+      // console.log(compData)
+      return (
+
+        <ul>
+          {
+            compData.map(company => {
+              return (
+                <li key={company.id}>
+                  {company.name}
+                  <ul>
+                    {company.catchPhrase}
+                    <li><CreateObj key= {company.id} compData={company.id} prodData={prodData} offerData={offerData}/></li>
+                  </ul>
+                </li>
+              )
+            })
+          }
+        </ul>
+      )
+    }
+
+    const Nav = ({location})=> {
+      const {pathname} = location
+      return (
+        <nav>
+          <Link to='/companies' className={pathname === '/companies'? 'selected': ''}>Companies</Link>
+          <Link to='/products' className={pathname === '/products'? 'selected': ''}>Products</Link>
+        </nav>
+      )
+    }
+
+    class App extends Component {
+      constructor() {
+        super()
+        this.state = {
+          compData: [],
+          prodData: [],
+          offerData: []
+        }
+      }
+
+      componentDidMount() {
+        Promise.all([companies, products, offerings]).then( data => {
+          let compData = data[0].data
+          let prodData = data[1].data
+          let offerData = data[2].data
+
+          this.setState({compData, prodData, offerData})
+
+          console.log({location})
+        })
+      }
+
+      render() {
+        const {compData, prodData, offerData} = this.state
+        // console.log(compData)
+
+        return (
+          <HashRouter>
+            <Route component= {Nav} />
+            <Route path='/companies' render= { ()=> <GenerateComp compData={compData} prodData={prodData} offerData={offerData}/>} />
+          </HashRouter>
+        )
+      }
+    }
+
+    ReactDOM.render(<App />, root)
+  </script>
+</html>
